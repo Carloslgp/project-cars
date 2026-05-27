@@ -21,6 +21,7 @@ class MainWindow(QWidget):
 
 
         self.simulation_screen = SimulationScreen()
+        self.simulation_screen.back_clicked.connect(self.handle_change_to_form)
 
 
         self.stack.addWidget(self.simulation_screen)
@@ -35,3 +36,6 @@ class MainWindow(QWidget):
         print(f"Recebi do carro 1: {car_1_values}")
         print(f"Recebi do carro 2: {car_2_values}")
         self.stack.setCurrentWidget(self.simulation_screen)
+
+    def handle_change_to_form(self):
+        self.stack.setCurrentWidget(self.input_screen)

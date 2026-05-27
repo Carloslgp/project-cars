@@ -32,8 +32,8 @@ class InputScreen(QWidget):
         car_1_values = self.car1.get_values()
         car_2_values = self.car2.get_values()
 
-        print(f"Car 1: \n - Acceleration: {car_1_values["acceleration"]} \n - Velocity: {car_1_values["velocity"]}")
-        print(f"Car 2: \n - Acceleration: {car_2_values["acceleration"]} \n - Velocity: {car_2_values["velocity"]}")
+        print(f"Car 1: \n - Acceleration: {car_1_values['acceleration']} \n - Velocity: {car_1_values['velocity']}")
+        print(f"Car 2: \n - Acceleration: {car_2_values['acceleration']} \n - Velocity: {car_2_values['velocity']}")
 
         self.run_clicked.emit(car_1_values, car_2_values)
 
