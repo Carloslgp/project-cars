@@ -8,6 +8,7 @@ class CarForm(QWidget):
 
         self.accel_spin = QDoubleSpinBox()
         self.accel_spin.setRange(0, 100)
+        self.accel_spin.setValue(2.0)
         self.accel_spin.setSingleStep(0.5)
         self.accel_spin.setSuffix(" m/s²")
 
@@ -27,3 +28,8 @@ class CarForm(QWidget):
 
         self.setLayout(layout)
 
+    def get_values(self):
+        return {
+            "acceleration": self.accel_spin.value(),
+            "velocity": self.vel_spin.value()
+        }

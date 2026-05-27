@@ -6,3 +6,6 @@ app = QApplication(sys.argv)
 window = InputScreen()
 window.show()
 app.exec()
+
+
+
