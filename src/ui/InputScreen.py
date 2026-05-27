@@ -1,8 +1,11 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QStackedWidget
+from PySide6.QtCore import Signal
+
 from src.ui.CarForm import CarForm
 
 
 class InputScreen(QWidget):
+    run_clicked = Signal(dict, dict)
     def __init__(self):
         super().__init__()
 
@@ -32,4 +35,5 @@ class InputScreen(QWidget):
         print(f"Car 1: \n - Acceleration: {car_1_values["acceleration"]} \n - Velocity: {car_1_values["velocity"]}")
         print(f"Car 2: \n - Acceleration: {car_2_values["acceleration"]} \n - Velocity: {car_2_values["velocity"]}")
 
+        self.run_clicked.emit(car_1_values, car_2_values)
 
