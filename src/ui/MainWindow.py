@@ -8,6 +8,10 @@ class MainWindow(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.car2 = None
+        self.car1 = None
+
+
         self.setWindowTitle("Project Cars")
 
         self.main_layout = QVBoxLayout()
@@ -33,8 +37,12 @@ class MainWindow(QWidget):
         self.setLayout(self.main_layout)
 
     def handle_run(self, car_1_values, car_2_values):
-        print(f"Recebi do carro 1: {car_1_values}")
-        print(f"Recebi do carro 2: {car_2_values}")
+
+        self.simulation_screen.car1 = car_1_values
+        self.simulation_screen.car2 = car_2_values
+
+        self.simulation_screen.load_scene()
+
         self.stack.setCurrentWidget(self.simulation_screen)
 
     def handle_change_to_form(self):
