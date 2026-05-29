@@ -51,15 +51,19 @@ class SimulationScreen(QWidget):
 
         self.plotter.clear()
         self.actors = {}  # guarda referência pra animar depois
-        car_list = []
+
 
         cars = [("car1", self.car1, 0.0), ("car2", self.car2, 3.0)]  # offset em Y
 
 
         for name, car, y_offset in cars:
             path = car.get("path")
+
             if not path:
                 continue
+
+
+            car_actors = []
 
             if path.lower().endswith((".glb", ".gltf")):
                 before = set(self.plotter.renderer.actors.keys())
@@ -67,36 +71,25 @@ class SimulationScreen(QWidget):
                 after = set(self.plotter.renderer.actors.keys())
                 for key in (after - before):
                     actor = self.plotter.renderer.actors[key]
-                    actor.position = (0, y_offset, 0)
-                    car_list.append(actor)
-                    self.actors[name] = {
-                        "actor": actor,
-                        "pos_x": 0,
-                        "pos_y": y_offset,
-                        "pos_z": 0,
-                        "velocity": car.get("velocity"),
-                        "acceleration": car.get("acceleration"),
-                        "path": path
-                    }
+                    x, y, z = actor.position
+                    actor.position = (x, y + y_offset, z)
+                    car_actors.append(actor)
+
 
 
             else:
                 mesh = pv.read(path)
                 actor = self.plotter.add_mesh(mesh, name=name)
                 actor.position = (0, y_offset, 0)
-                car_list.append(actor)
-                self.actors[name] = {
-                    "actor": actor,
-                    "pos_x": 0,
-                    "pos_y": y_offset,
-                    "pos_z": 0,
-                    "velocity": car.get("velocity"),
-                    "acceleration": car.get("acceleration"),
-                    "path": path
-                }
+                car_actors.append(actor)
 
 
-
+            self.actors[name] = {
+                "actors": car_actors,
+                "velocity": float(car.get("velocity")),
+                "acceleration": float(car.get("acceleration")),
+                "path": path,
+            }
 
 
 
@@ -107,5 +100,11 @@ class SimulationScreen(QWidget):
         self.back_clicked.emit()
 
     def update_car_position(self):
-        print(self.actors)
+        for name, data in self.actors.items():
+            for actor in data["actors"]:
+                x, y, z = actor.position
+                print(name, "antes: ", (x, y, z))
+                actor.position = (x + 1, y, z)
+                print(name, "depois: ", (x, y, z))
+        self.plotter.reset_camera()
 
