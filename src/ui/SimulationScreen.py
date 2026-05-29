@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QVBoxLayout, QStackedWidget, QLabel
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QTimer
 
 from pyvistaqt import QtInteractor
 import pyvista as pv
@@ -35,13 +35,26 @@ class SimulationScreen(QWidget):
         self.back_button.clicked.connect(self.change_to_form)
 
 
+
+
+
         self.setLayout(self.simulation_layout)
 
     def load_scene(self):
+
+        self.timer = QTimer()
+
+        self.timer.timeout.connect(self.update_car_position)
+
+        self.timer.start(1000)
+
+
         self.plotter.clear()
         self.actors = {}  # guarda referência pra animar depois
+        car_list = []
 
         cars = [("car1", self.car1, 0.0), ("car2", self.car2, 3.0)]  # offset em Y
+
 
         for name, car, y_offset in cars:
             path = car.get("path")
@@ -49,19 +62,50 @@ class SimulationScreen(QWidget):
                 continue
 
             if path.lower().endswith((".glb", ".gltf")):
-                # glTF não dá actor direto; carrega e move o que entrou
                 before = set(self.plotter.renderer.actors.keys())
                 self.plotter.import_gltf(path)
                 after = set(self.plotter.renderer.actors.keys())
                 for key in (after - before):
-                    self.plotter.renderer.actors[key].position = (0, y_offset, 0)
+                    actor = self.plotter.renderer.actors[key]
+                    actor.position = (0, y_offset, 0)
+                    car_list.append(actor)
+                    self.actors[name] = {
+                        "actor": actor,
+                        "pos_x": 0,
+                        "pos_y": y_offset,
+                        "pos_z": 0,
+                        "velocity": car.get("velocity"),
+                        "acceleration": car.get("acceleration"),
+                        "path": path
+                    }
+
+
             else:
                 mesh = pv.read(path)
                 actor = self.plotter.add_mesh(mesh, name=name)
                 actor.position = (0, y_offset, 0)
-                self.actors[name] = actor
+                car_list.append(actor)
+                self.actors[name] = {
+                    "actor": actor,
+                    "pos_x": 0,
+                    "pos_y": y_offset,
+                    "pos_z": 0,
+                    "velocity": car.get("velocity"),
+                    "acceleration": car.get("acceleration"),
+                    "path": path
+                }
+
+
+
+
+
 
         self.plotter.reset_camera()
 
     def change_to_form(self):
+        self.timer.stop()
         self.back_clicked.emit()
+
+    def update_car_position(self):
+        print(self.actors)
+
