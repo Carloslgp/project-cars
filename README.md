@@ -1,83 +1,68 @@
 # project_cars
+I started playing Forza Horizon 6. On a straightaway, tucked right behind another car, my car would gain speed without me doing anything. Draft. Everyone knows it exists, but I got stuck on a question: where does that gain come from, and what happens when the cars aren't the same size? A hatchback behind a pickup gets the full draft, sure. But the pickup behind the hatchback, how much does it get?
 
-Comecei jogando Forza Horizon 6. Numa reta, colado atrás de outro carro, meu carro ganhava velocidade sem eu fazer nada. Vácuo. Todo mundo sabe que existe, mas fiquei preso numa pergunta: de onde vem esse ganho, e o que acontece quando os carros não têm o mesmo tamanho? Um hatch atrás de uma picape pega vácuo inteiro, tudo bem. Mas a picape atrás do hatch, pega quanto?
+This project is an attempt to see that happen, instead of just reading the formula.
 
-Esse projeto é a tentativa de ver isso acontecer, em vez de só ler a fórmula.
+## The idea
+Two 3D cars, one behind the other, each with its own base acceleration and initial speed. Hit run and they take off accelerating together. The gap between them opens or closes depending on each car's shape, each one's acceleration, and how much the rear car manages to hide behind the front one. If it catches up, they collide, and the simulation ends.
 
-## A ideia
+None of this is hand-written rules: you load the mesh, the program measures the geometry, and the behavior emerges from that.
 
-Dois carros 3D, um atrás do outro, cada um com sua aceleração base e velocidade inicial. Aperta run e eles saem acelerando juntos. A distância entre eles abre ou fecha dependendo da forma de cada carro, da aceleração de cada um, e do quanto o de trás consegue se esconder atrás do da frente. Se ele alcança, colide, e a simulação termina.
+## What you can see
+- **The car takes on color** based on the angle of each face relative to the wind: red at the front, neutral on the sides, blue in the wake.
+- **The wake has a size**, proportional to the frontal area of the car ahead: a big car casts a big shadow.
+- **Drafting isn't all-or-nothing.** Only the part of the rear car that fits inside the shadow gets relief. Whatever overflows, in width or height, still takes full wind. That's why a small car behind a big one surges to catch up, while a boxy vehicle behind a small car barely feels the draft. And the relief decays with distance: strong right behind, fading as the gap opens.
 
-Nada disso é regra escrita à mão: você carrega a malha, o programa mede a geometria, e o comportamento emerge daí.
-
-## O que dá pra ver
-
-- **O carro pega cor** conforme o ângulo de cada face com o vento: vermelho de frente, neutro de lado, azul na esteira.
-- **A esteira tem tamanho**, proporcional à área frontal do carro da frente: carro grande projeta sombra grande.
-- **O vácuo não é tudo ou nada.** Só recebe alívio a parte do carro de trás que cabe dentro da sombra. O que transborda, em largura ou altura, continua tomando vento cheio. Por isso um carro pequeno atrás de um grande dispara pra alcançar, enquanto um caixote atrás de um carro pequeno mal sente o vácuo. E o alívio decai com a distância: forte logo atrás, some conforme abre.
-
-## Como usar
-
-Carrega dois objetos 3D (`.obj` ou `.stl`), define aceleração base e velocidade inicial de cada um, e clica em Run. Abre uma cena 3D com câmera orbital, os carros aceleram em tempo real e um HUD mostra velocidade, distância e tempo até a colisão. Ao terminar, volta pra tela de input com os dados preservados.
+## How to use it
+Load two 3D objects (`.obj` or `.stl`), set base acceleration and initial speed for each, and click Run. A 3D scene opens with an orbital camera, the cars accelerate in real time, and a HUD shows speed, distance, and time to collision. When it ends, it goes back to the input screen with the data preserved.
 
 ---
-
-## Parte técnica
-
-### Física
-
-O arrasto de cada carro segue a fórmula clássica:
-
+## Technical part
+### Physics
+Each car's drag follows the classic formula:
 ```
-arrasto = ½ · ρ · Cd · A · v²
+drag = ½ · ρ · Cd · A · v²
 ```
+where `A` is the frontal area calculated from the 3D mesh itself. The resulting acceleration is traction minus drag.
 
-onde `A` é a área frontal calculada a partir da própria malha 3D. A aceleração resultante é tração menos arrasto.
-
-A coloração vem do ângulo entre a normal de cada face e a direção do movimento (`cos²θ`). É um **proxy geométrico**, não CFD. Roda em tempo real e ainda assim mostra, de forma fisicamente motivada, onde há mais e menos atrito.
+The coloring comes from the angle between each face's normal and the direction of motion (`cos²θ`). It's a **geometric proxy**, not CFD. It runs in real time and still shows, in a physically motivated way, where there's more and less drag.
 
 ### Drafting
+The drag relief combines two factors:
+- **Fraction in the shadow:** how much of the rear car's frontal area overlaps with the front car's wake (width and height). The part outside takes full drag.
+- **Wake strength:** decays with the distance between the two cars.
 
-O alívio de arrasto combina dois fatores:
-
-- **Fração na sombra:** quanto da área frontal do carro de trás se sobrepõe à esteira do da frente (largura e altura). A parte de fora sofre arrasto cheio.
-- **Força da esteira:** decai com a distância entre os dois.
-
-As projeções por enquanto são aproximadas por retângulos de área equivalente. A silhueta exata fica como refinamento posterior.
+The projections are currently approximated by rectangles of equivalent area. The exact silhouette remains a later refinement.
 
 ### Stack
-
 - **Python**
-- **PySide6** (Qt): telas de input e janela principal
-- **pyvistaqt**: embute a cena do PyVista na janela Qt
-- **PyVista / VTK**: render 3D, câmera orbital, simulação em tempo real
-- Upload de malha em `.obj` / `.stl`
-
+- **PySide6** (Qt): input screens and main window
+- **pyvistaqt**: embeds the PyVista scene inside the Qt window
+- **PyVista / VTK**: 3D rendering, orbital camera, real-time simulation
+- Mesh upload in `.obj` / `.stl`
 ```bash
 pip install PySide6 pyvista pyvistaqt
 ```
 
-### Arquitetura
-
-Um `QStackedWidget` troca entre a tela de input (índice 0) e a cena 3D (índice 1). O botão Run troca pro 3D e, ao terminar, volta pro input sem perder os dados.
+### Architecture
+A `QStackedWidget` switches between the input screen (index 0) and the 3D scene (index 1). The Run button switches to 3D and, when it ends, returns to the input screen without losing the data.
 
 ```mermaid
 flowchart TD
-    A[Telas de input<br/>2 carros: .obj, accel, V inicial] --> B[Fisica<br/>tracao - arrasto]
-    B --> C[Viewer 3D<br/>camera orbital + HUD]
-    C --> D[HUD<br/>velocidade, distancia, tempo ate colisao]
+    A[Input screens<br/>2 cars: .obj, accel, initial V] --> B[Physics<br/>traction - drag]
+    B --> C[3D Viewer<br/>orbital camera + HUD]
+    C --> D[HUD<br/>speed, distance, time to collision]
 ```
 
 ```
 project_cars/
-├── main.py          # costura tudo
-├── ui.py            # telas de input
-├── physics.py       # motor de fisica (so numeros)
-├── mesh_loader.py   # carrega .obj/.stl
-├── viewer.py        # cena 3D + camera
-└── models/          # .obj de teste
+├── main.py          # ties everything together
+├── ui.py            # input screens
+├── physics.py       # physics engine (numbers only)
+├── mesh_loader.py   # loads .obj/.stl
+├── viewer.py        # 3D scene + camera
+└── models/           # test .obj files
 ```
 
 ### Status
-
-Construindo as telas de input em PySide6 (`ui.py`): o `QStackedWidget` com a tela de input e um placeholder pra cena 3D. Física e PyVista entram depois que a navegação entre telas estiver funcionando.
+Building the input screens in PySide6 (`ui.py`): the `QStackedWidget` with the input screen and a placeholder for the 3D scene. Physics and PyVista come in once navigation between screens is working.
